@@ -1,0 +1,6 @@
+repo	provider	file	port	launcher
+phisher	MovieBox (Phisher)	MovieBoxProvider.cs3	8788	extensions/phisher/start-moviebox-phisher.bat
+cncverse	MovieBox (CNCVerse)	MovieBoxProvider.cs3	8789	extensions/cncverse/start-moviebox-cncverse.bat
+cncverse	MovieBox IN (CNCVerse)	MovieBoxProviderIN.cs3	8790	extensions/cncverse/start-moviebox-cncverse-in.bat
+cncverse	CastleTV (CNCVerse)	CastleTvProvider.cs3	8791	extensions/cncverse/start-castletv-cncverse.bat
+youtube	YouTube	youtube.js	8792	extensions/youtube/start-youtube.bat

@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="color-scheme" content="dark" />
+<title>CloudStream — Local Contact Sheets</title>
+<link rel="stylesheet" href="/styles.css?v=2026111210" />
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">
+    <div class="logo">CS</div>
+    <div class="brand-text">
+      <h1>CloudStream <span>Local</span></h1>
+      <p id="brandSub">Provider runtime &amp; contact sheets</p>
+    </div>
+  </div>
+  <div class="top-actions">
+    <span id="health" class="pill pill-muted">checking…</span>
+    <button id="refreshJobs" class="btn btn-ghost" type="button" title="Reload the job list">
+      <span class="btn-icon" aria-hidden="true">↻</span> Refresh
+    </button>
+  </div>
+</header>
+
+<main class="layout">
+  <section class="panel search-panel">
+    <div class="panel-head">
+      <div>
+        <h2>Search</h2>
+        <p class="panel-sub">MovieBox · CastleTV · YouTube</p>
+      </div>
+      <span class="kbd" title="Press / to focus the search box">/</span>
+    </div>
+
+    <div class="provider-strip" id="providerStrip"></div>
+
+    <form id="searchForm" class="search-row" autocomplete="off">
+      <span class="search-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path>
+        </svg>
+      </span>
+      <input id="query" type="search" placeholder="Search a title, or paste a YouTube video / Shorts / playlist link…" required />
+      <button class="btn btn-primary" type="submit">Search</button>
+    </form>
+    <div id="searchStatus" class="search-status" role="status" aria-live="polite"></div>
+
+    <div class="tool-card">
+      <div class="tool-head">
+        <span class="tool-badge">PDF</span>
+        <div class="tool-copy">
+          <strong>Video → PDF</strong>
+          <p>Turn a whole clip into a PDF where every frame is a page. Built for YouTube Shorts — a 60 s clip at 30 fps is 1,800 pages.</p>
+        </div>
+      </div>
+      <div class="tool-grid">
+        <label class="field field-grow">
+          <span>YouTube Shorts link</span>
+          <input id="pdfLink" type="url" placeholder="https://youtube.com/shorts/…" />
+        </label>
+        <label class="field">
+          <span>Frames / sec</span>
+          <input id="pdfFps" type="number" min="1" max="30" step="1" value="30" title="Frames per second (1–30)" />
+        </label>
+        <label class="field">
+          <span>Width</span>
+          <select id="pdfWidth" title="Frame width">
+            <option value="320">320 px</option>
+            <option value="480">480 px</option>
+            <option value="640" selected>640 px</option>
+            <option value="854">854 px</option>
+          </select>
+        </label>
+        <button id="pdfGo" class="btn btn-primary tool-go" type="button">Make PDF</button>
+      </div>
+      <p class="tool-hint">The clip is downloaded once; every frame is extracted, then the video and the frame images are deleted. Longer videos work too but make very large PDFs.</p>
+    </div>
+
+    <div id="results" class="results"></div>
+  </section>
+
+  <section class="panel detail-panel" id="detailPanel">
+    <div class="empty" id="detailEmpty">
+      <div class="empty-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" width="34" height="34" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="3" width="7" height="7" rx="1.5"></rect>
+          <rect x="14" y="3" width="7" height="7" rx="1.5"></rect>
+          <rect x="3" y="14" width="7" height="7" rx="1.5"></rect>
+          <rect x="14" y="14" width="7" height="7" rx="1.5"></rect>
+        </svg>
+      </div>
+      <p>Pick a title to choose episodes, plan contact sheets, burn captions, cut clips or build a PDF.</p>
+    </div>
+    <div id="detailBody" class="hidden"></div>
+  </section>
+</main>
+
+<section class="panel jobs-panel" id="jobsPanel">
+  <div class="panel-head">
+    <div>
+      <h2>Jobs</h2>
+      <p class="panel-sub" id="jobsHint">sheets · clips · PDFs are saved under extensions/&lt;repo&gt;/</p>
+    </div>
+    <div class="job-summary" id="jobSummary"></div>
+  </div>
+  <div id="jobs" class="jobs" aria-live="polite"></div>
+</section>
+
+<footer class="footer">
+  <span>CloudStream Local · <span id="footerBuild">ui</span></span>
+  <span class="hint">127.0.0.1 only — nothing leaves this machine</span>
+</footer>
+
+<div id="lightbox" class="lightbox hidden" role="dialog" aria-modal="true" aria-label="Sheet preview">
+  <div class="lightbox-inner" role="document">
+    <div class="lightbox-bar">
+      <div class="lightbox-copy">
+        <strong id="lbTitle">Contact sheet</strong>
+        <span id="lbMeta" class="hint"></span>
+      </div>
+      <div class="lightbox-actions">
+        <a id="lbDownload" class="btn btn-sm btn-primary" download>Download</a>
+        <a id="lbOpen" class="btn btn-sm btn-ghost" target="_blank" rel="noopener">Open</a>
+        <button id="lbClose" class="btn btn-sm btn-ghost" type="button">Close</button>
+      </div>
+    </div>
+    <div class="lightbox-img"><img id="lbImg" alt="Contact sheet preview" /></div>
+  </div>
+</div>
+
+<div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
+<script src="/app.js?v=2026111210"></script>
+</body>
+</html>

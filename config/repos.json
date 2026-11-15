@@ -1,0 +1,305 @@
+{
+  "generatedFrom": "https://cloudstream.miraheze.org/wiki/List_of_extensions",
+  "repos": [
+    {
+      "id": "recloudstream-extensions",
+      "name": "CloudStream providers repository (official)",
+      "shortcode": "cspr",
+      "region": "Global",
+      "git": "https://github.com/recloudstream/extensions.git",
+      "branch": "master",
+      "repoJson": "https://raw.githubusercontent.com/recloudstream/extensions/master/repo.json",
+      "web": "https://github.com/recloudstream/extensions"
+    },
+    {
+      "id": "megarepo",
+      "name": "Mega repository",
+      "shortcode": "megarepo",
+      "region": "Global",
+      "git": "https://github.com/self-similarity/MegaRepo.git",
+      "branch": "builds",
+      "repoJson": "https://raw.githubusercontent.com/self-similarity/MegaRepo/builds/repo.json",
+      "web": "https://github.com/self-similarity/MegaRepo"
+    },
+    {
+      "id": "csx",
+      "name": "Megix Repo (Hindi & English)",
+      "shortcode": "csx",
+      "region": "Global",
+      "git": "https://github.com/SaurabhKaperwan/CSX.git",
+      "branch": "builds",
+      "repoJson": "https://raw.githubusercontent.com/SaurabhKaperwan/CSX/builds/CS.json",
+      "web": "https://github.com/SaurabhKaperwan/CSX"
+    },
+    {
+      "id": "raghav",
+      "name": "raghav repo",
+      "shortcode": "raghav766",
+      "region": "Global",
+      "git": "https://github.com/KSHITIJ8473/raghav.git",
+      "branch": "builds",
+      "repoJson": "https://raw.githubusercontent.com/KSHITIJ8473/raghav/builds/repo.json",
+      "web": "https://github.com/KSHITIJ8473/raghav"
+    },
+    {
+      "id": "eclipsia",
+      "name": "Eclipsia",
+      "shortcode": "eclp1",
+      "region": "Global",
+      "git": "https://gitea.com/eclipsia/cloudstream.git",
+      "branch": "",
+      "repoJson": "https://cs.eclipsia.dpdns.org/repo.json",
+      "web": "https://gitea.com/eclipsia/cloudstream"
+    },
+    {
+      "id": "indflix",
+      "name": "Indflix Repo",
+      "shortcode": "indflix",
+      "region": "Global",
+      "git": "https://github.com/dipender98/Indflix.git",
+      "branch": "builds",
+      "repoJson": "https://raw.githubusercontent.com/dipender98/Indflix/builds/repo.json",
+      "web": "https://github.com/dipender98/Indflix"
+    },
+    {
+      "id": "cloudx",
+      "name": "CloudX Repository",
+      "shortcode": "cloudx",
+      "region": "Global",
+      "git": "https://github.com/Asm0d3usX/CloudX.git",
+      "branch": "builds",
+      "repoJson": "https://raw.githubusercontent.com/Asm0d3usX/CloudX/builds/repo.json",
+      "web": "https://github.com/Asm0d3usX/CloudX-V2"
+    },
+    {
+      "id": "dogiors",
+      "name": "doGior's Had Enough",
+      "shortcode": "gior",
+      "region": "Global",
+      "git": "https://github.com/doGior/doGiorsHadEnough.git",
+      "branch": "builds",
+      "repoJson": "https://raw.githubusercontent.com/doGior/doGiorsHadEnough/refs/heads/builds/repo.json",
+      "web": "https://github.com/doGior/doGiorsHadEnough"
+    },
+    {
+      "id": "cs-karma",
+      "name": "cs-karma",
+      "shortcode": "cskarma",
+      "region": "Global",
+      "git": "https://github.com/Kraptor123/cs-Karma.git",
+      "branch": "master",
+      "repoJson": "https://raw.githubusercontent.com/Kraptor123/cs-Karma/refs/heads/master/repo.json",
+      "web": "https://github.com/Kraptor123/Cs-Karma"
+    },
+    {
+      "id": "storm-ext",
+      "name": "Storm-ext Fork by redblacker8",
+      "shortcode": "strr",
+      "region": "Global",
+      "git": "https://github.com/redblacker8/storm-ext.git",
+      "branch": "builds",
+      "repoJson": "https://raw.githubusercontent.com/redblacker8/storm-ext/refs/heads/builds/repo.json",
+      "web": "https://github.com/redblacker8/storm-ext"
+    },
+    {
+      "id": "reflex",
+      "name": "Reflex Repo",
+      "shortcode": "reflex1337",
+      "region": "Global",
+      "git": "https://github.com/Reflex755/ReflexRepo.git",
+      "branch": "builds",
+      "repoJson": "https://raw.githubusercontent.com/Reflex755/ReflexRepo/refs/heads/builds/repo.json",
+      "web": "https://github.com/Reflex755/ReflexRepo"
+    },
+    {
+      "id": "flummox",
+      "name": "FLUMMOX Repo",
+      "shortcode": "flummox",
+      "region": "Global",
+      "git": "https://github.com/FlummoxGamer/FLUMMOX-Repo.git",
+      "branch": "builds",
+      "repoJson": "https://raw.githubusercontent.com/FlummoxGamer/FLUMMOX-Repo/builds/repo.json",
+      "web": "https://github.com/FlummoxGamer/FLUMMOX-Repo"
+    },
+    {
+      "id": "luna712",
+      "name": "Luna712's CloudStream extension repository",
+      "shortcode": "luna712",
+      "region": "Global",
+      "git": "https://github.com/Luna712/Luna712-CloudStream-Extensions.git",
+      "branch": "",
+      "repoJson": "https://raw.githubusercontent.com/Luna712/Luna712-CloudStream-Extensions/28885d17ceb7f24782b732b6056085c14c1fd027/repo.json",
+      "web": "https://github.com/Luna712/Luna712-CloudStream-Extensions"
+    },
+    {
+      "id": "redowan",
+      "name": "Redowan's BDIX repository (Bengali, English, Hindi)",
+      "shortcode": "redowan",
+      "region": "Regional / BD",
+      "git": "https://github.com/redowan99/Redowan-CloudStream.git",
+      "branch": "master",
+      "repoJson": "https://raw.githubusercontent.com/redowan99/Redowan-CloudStream/master/repo.json",
+      "web": "https://github.com/redowan99/Redowan-CloudStream"
+    },
+    {
+      "id": "3arabi",
+      "name": "3rabi عربي",
+      "shortcode": "arb",
+      "region": "Arabic",
+      "git": "https://github.com/Abodabodd/re-3arabi.git",
+      "branch": "main",
+      "repoJson": "https://raw.githubusercontent.com/Abodabodd/re-3arabi/refs/heads/main/repo",
+      "web": "https://github.com/Abodabodd/re-3arabi"
+    },
+    {
+      "id": "cs-ar",
+      "name": "CS-AR (عربي)",
+      "shortcode": "iq3",
+      "region": "Arabic",
+      "git": "https://github.com/mo7AmMeD64/cs-ar.git",
+      "branch": "main",
+      "repoJson": "https://raw.githubusercontent.com/mo7AmMeD64/cs-ar/main/repo/repo.json",
+      "web": "https://github.com/mo7AmMeD64/cs-ar"
+    },
+    {
+      "id": "mehdigm",
+      "name": "Mehdi GM — الوجهة العربية",
+      "shortcode": "mehdigm",
+      "region": "Arabic",
+      "git": "https://github.com/mehdigm4life/mehdigm-stream.git",
+      "branch": "main",
+      "repoJson": "https://raw.githubusercontent.com/mehdigm4life/mehdigm-stream/main/Mehdi.json",
+      "web": "https://github.com/mehdigm4life/mehdigm-stream"
+    },
+    {
+      "id": "cartoonyrepo",
+      "name": "Cartoony Repo",
+      "shortcode": "",
+      "region": "Arabic",
+      "git": "https://github.com/med1245/cartoonyrepo.git",
+      "branch": "builds",
+      "repoJson": "https://raw.githubusercontent.com/med1245/cartoonyrepo/builds/repo.json",
+      "web": "https://github.com/med1245/cartoonyrepo"
+    },
+    {
+      "id": "yorik100",
+      "name": "French providers repository — Français",
+      "shortcode": "",
+      "region": "French",
+      "git": "https://github.com/yorik100/Cloudstream.git",
+      "branch": "builds",
+      "repoJson": "https://raw.githubusercontent.com/yorik100/Cloudstream/refs/heads/builds/repo.json",
+      "web": "https://github.com/yorik100/Cloudstream"
+    },
+    {
+      "id": "germanproviders",
+      "name": "German providers repository — Deutsch",
+      "shortcode": "gpr",
+      "region": "German",
+      "git": "https://github.com/Bnyro/GermanProviders.git",
+      "branch": "master",
+      "repoJson": "https://raw.githubusercontent.com/Bnyro/GermanProviders/refs/heads/master/repo.json",
+      "web": "https://github.com/Bnyro/GermanProviders"
+    },
+    {
+      "id": "italiainstreaming",
+      "name": "DieGon Repository / ItaliaInStreaming — Italiano",
+      "shortcode": "diegon7",
+      "region": "Italian",
+      "git": "https://github.com/DieGon7771/ItaliaInStreaming.git",
+      "branch": "builds",
+      "repoJson": "https://pastebin.com/raw/qndZtL6D",
+      "web": "https://github.com/DieGon7771/ItaliaInStreaming"
+    },
+    {
+      "id": "cakestwix-uk",
+      "name": "CakesTwix repository — Ukrainian",
+      "shortcode": "cakes",
+      "region": "Ukrainian",
+      "git": "https://codeberg.org/CakesTwix/cloudstream-extensions-uk.git",
+      "branch": "master",
+      "repoJson": "https://codeberg.org/CakesTwix/cloudstream-extensions-uk/raw/branch/master/repo.json",
+      "web": "https://codeberg.org/CakesTwix/cloudstream-extensions-uk"
+    },
+    {
+      "id": "lietrepo",
+      "name": "lietrepo",
+      "shortcode": "",
+      "region": "Global",
+      "git": "https://github.com/lawlietbr/lietrepo.git",
+      "branch": "main",
+      "repoJson": "https://raw.githubusercontent.com/lawlietbr/lietrepo/refs/heads/main/builds/repo.json",
+      "web": "https://github.com/lawlietbr/lietrepo"
+    },
+    {
+      "id": "aniyomi-compat",
+      "name": "Aniyomi Compat",
+      "shortcode": "anicompat",
+      "region": "Utility",
+      "git": "https://github.com/CranberrySoup/AniyomiCompatExtension.git",
+      "branch": "master",
+      "repoJson": "https://raw.githubusercontent.com/CranberrySoup/AniyomiCompatExtension/master/repo.json",
+      "web": "https://github.com/CranberrySoup/AniyomiCompatExtension"
+    },
+    {
+      "id": "phisher",
+      "name": "Phisher Repo",
+      "shortcode": "phisherrepo",
+      "region": "Global (India)",
+      "git": "https://github.com/phisher98/cloudstream-extensions-phisher.git",
+      "branch": "builds",
+      "repoJson": "https://raw.githubusercontent.com/phisher98/cloudstream-extensions-phisher/refs/heads/builds/repo.json",
+      "web": "https://github.com/phisher98/cloudstream-extensions-phisher"
+    },
+    {
+      "id": "cncverse",
+      "name": "CNC Verse repository",
+      "shortcode": "cncv",
+      "region": "Global (India)",
+      "git": "https://github.com/NivinCNC/CNCVerse-Cloud-Stream-Extension.git",
+      "branch": "builds",
+      "repoJson": "https://raw.githubusercontent.com/NivinCNC/CNCVerse-Cloud-Stream-Extension/refs/heads/builds/CNC.json",
+      "web": "https://github.com/NivinCNC/CNCVerse-Cloud-Stream-Extension"
+    },
+    {
+      "id": "saimuel",
+      "name": "Saimuel Repo (Portuguese)",
+      "shortcode": "saim",
+      "region": "Portuguese",
+      "git": "https://github.com/saimuelbr/saimuelrepo.git",
+      "branch": "main",
+      "repoJson": "https://raw.githubusercontent.com/saimuelbr/saimuelrepo/refs/heads/main/builds/repo.json",
+      "web": "https://github.com/saimuelbr/saimuelrepo"
+    },
+    {
+      "id": "cloudstream-vietnamese",
+      "name": "CloudStream Vietnamese",
+      "shortcode": "viet",
+      "region": "Vietnamese",
+      "git": "https://gitlab.com/tearrs/cloudstream-vietnamese.git",
+      "branch": "code",
+      "repoJson": "https://gitlab.com/tearrs/cloudstream-vietnamese/-/raw/main/repo.json",
+      "web": "https://gitlab.com/tearrs/cloudstream-vietnamese"
+    },
+    {
+      "id": "desi",
+      "name": "Desi Extensions",
+      "shortcode": "",
+      "region": "Global (India)",
+      "git": "https://github.com/Faisal0786/Desi.git",
+      "branch": "main",
+      "repoJson": "https://raw.githubusercontent.com/Faisal0786/Desi/main/repo.json",
+      "web": "https://github.com/Faisal0786/Desi"
+    },
+    {
+      "id": "cloudstream-games",
+      "name": "CloudStream Games",
+      "shortcode": "CSGAMES",
+      "region": "Games",
+      "git": "https://github.com/errorcode26/Ayu-CloudStream-Games.git",
+      "branch": "builds",
+      "repoJson": "https://raw.githubusercontent.com/errorcode26/Ayu-CloudStream-Games/builds/repo.json",
+      "web": "https://github.com/errorcode26/Ayu-CloudStream-Games"
+    }
+  ]
+}
