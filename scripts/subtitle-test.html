@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<!-- Subtitle prototype UI for subtitle_prototype.py (serve mode, http://127.0.0.1:8799).
+     Logic ported from the decompiled .cs3 plugins:
+       moviebox   MovieBoxProvider.cs3  loadCaptions (get-stream-captions + get-ext-captions)
+       castle     CastleTvProvider.cs3  details v1.9.9 subtitles / getVideo2 v2.0.1
+       fourkhdhub FourKHDHub.cs3        NO subtitle support (extractors never emit one)
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Subtitle prototype — MovieBox / CastleTV</title>
+<style>
+  :root {
+    --bg: #101418; --panel: #1a2027; --panel2: #222a33; --line: #2e3841;
+    --text: #dce3ea; --dim: #8a97a3; --acc: #4aa3ff; --ok: #59c98b; --warn: #e0a13d;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text);
+         font: 14px/1.45 "Segoe UI", system-ui, sans-serif; }
+  header { padding: 14px 20px; border-bottom: 1px solid var(--line); }
+  header h1 { margin: 0; font-size: 16px; font-weight: 600; }
+  header p { margin: 2px 0 0; color: var(--dim); font-size: 12px; }
+  main { display: grid; grid-template-columns: minmax(300px, 380px) 1fr;
+         gap: 14px; padding: 14px 20px; max-width: 1400px; margin: 0 auto; }
+  .tabs { display: flex; gap: 6px; margin-bottom: 10px; }
+  .tabs button { flex: 1; padding: 8px 10px; border: 1px solid var(--line);
+    background: var(--panel); color: var(--dim); border-radius: 6px; cursor: pointer;
+    font-size: 13px; }
+  .tabs button.on { background: var(--panel2); color: var(--text);
+    border-color: var(--acc); }
+  .tabs button.dead { opacity: .45; cursor: not-allowed; }
+  .card { background: var(--panel); border: 1px solid var(--line);
+          border-radius: 8px; padding: 12px; }
+  .card + .card { margin-top: 10px; }
+  .card h2 { margin: 0 0 8px; font-size: 12px; font-weight: 600;
+             text-transform: uppercase; letter-spacing: .06em; color: var(--dim); }
+  .row { display: flex; gap: 8px; }
+  input[type=text] { flex: 1; padding: 8px 10px; background: var(--bg);
+    border: 1px solid var(--line); color: var(--text); border-radius: 6px; }
+  button.go { padding: 8px 14px; background: var(--acc); color: #06121f;
+    border: 0; border-radius: 6px; font-weight: 600; cursor: pointer; }
+  button.go:disabled { opacity: .5; }
+  ul.items { list-style: none; margin: 0; padding: 0; max-height: 46vh; overflow-y: auto; }
+  ul.items li { padding: 8px 10px; border: 1px solid var(--line); border-radius: 6px;
+    margin-bottom: 6px; cursor: pointer; background: var(--bg); }
+  ul.items li:hover { border-color: var(--acc); }
+  ul.items li.sel { border-color: var(--acc); background: #16232f; }
+  ul.items .t { font-weight: 600; }
+  ul.items .s { color: var(--dim); font-size: 12px; margin-top: 2px; word-break: break-all; }
+  .pill { display: inline-block; padding: 1px 7px; border-radius: 10px; font-size: 11px;
+    background: var(--panel2); color: var(--dim); margin-right: 6px; }
+  .pill.def { background: #12335a; color: #9cc9f5; }
+  .pill.ai  { background: #3a2a12; color: var(--warn); }
+  #right .card { min-height: 120px; }
+  pre.cap { margin: 0; white-space: pre-wrap; word-break: break-word; font: 12px/1.5
+    Consolas, monospace; color: var(--text); max-height: 60vh; overflow-y: auto; }
+  .muted { color: var(--dim); font-size: 12px; }
+  .err { color: #e06868; }
+  .status { min-height: 18px; font-size: 12px; color: var(--dim); margin-top: 8px; }
+  .note { font-size: 12px; color: var(--warn); }
+</style>
+</head>
+<body>
+<header>
+  <h1>Subtitle prototype</h1>
+  <p>MovieBox &amp; CastleTV subtitle logic ported from the decompiled .cs3 plugins &mdash;
+     served by <code>python subtitle_prototype.py serve</code> on 127.0.0.1:8799</p>
+</header>
+
+<main>
+  <section id="left">
+    <div class="tabs">
+      <button id="tab-mb" class="on">MovieBox</button>
+      <button id="tab-castle">CastleTV</button>
+      <button id="tab-4k" class="dead" title="FourKHDHub.cs3 provides no subtitles — its
+        extractors (HubCloud/Hubdrive/Hblinks/HUBCDN) never emit a SubtitleFile">4KHDHub (none)</button>
+    </div>
+
+    <!-- MovieBox -->
+    <div id="pane-mb">
+      <div class="card">
+        <h2>1 · Search subject</h2>
+        <div class="row">
+          <input type="text" id="mb-q" placeholder="e.g. inception">
+          <button class="go" id="mb-go">Search</button>
+        </div>
+        <div class="status" id="mb-s"></div>
+      </div>
+      <div class="card">
+        <h2>2 · Subjects</h2>
+        <ul class="items" id="mb-items"></ul>
+        <p class="muted">Clicking a subject runs <code>loadCaptions</code> — both endpoints
+          (<code>get-stream-captions</code> + <code>get-ext-captions</code>) over every
+          streamId candidate (play-info streams, resource ids, <code>se|ep</code> fallback),
+          merged and deduped by url.</p>
+      </div>
+      <div class="card">
+        <h2>3 · Caption tracks</h2>
+        <ul class="items" id="mb-caps"></ul>
+      </div>
+    </div>
+
+    <!-- Castle -->
+    <div id="pane-castle" hidden>
+      <div class="card">
+        <h2>1 · Search movie</h2>
+        <div class="row">
+          <input type="text" id="c-q" placeholder="e.g. pathaan">
+          <button class="go" id="c-go">Search</button>
+        </div>
+        <div class="status" id="c-s"></div>
+      </div>
+      <div class="card">
+        <h2>2 · Movies</h2>
+        <ul class="items" id="c-items"></ul>
+      </div>
+      <div class="card">
+        <h2>3 · Episodes (audio tracks)</h2>
+        <ul class="items" id="c-eps"></ul>
+        <p class="muted">Details v1.9.9 already carries each episode's subtitle list;
+          <code>getVideo2</code> (v2.0.1, resolution codes 2/1) is only the fallback.</p>
+      </div>
+      <div class="card">
+        <h2>4 · Subtitle tracks</h2>
+        <ul class="items" id="c-subs"></ul>
+      </div>
+    </div>
+  </section>
+
+  <section id="right">
+    <div class="card">
+      <h2>Subtitle preview <span id="pv-src" class="muted"></span></h2>
+      <pre class="cap" id="pv">Pick a subtitle track to preview its first lines here.</pre>
+    </div>
+    <div class="card">
+      <h2>How each provider supplies subtitles</h2>
+      <p><b>MovieBox</b> — two signed BFF endpoints, same auth headers as streams:
+        <code>GET /wefeed-mobile-bff/subject-api/get-stream-captions?subjectId=..&amp;streamId=..</code>
+        and <code>GET /wefeed-mobile-bff/subject-api/get-ext-captions?subjectId=..&amp;resourceId=..&amp;episode=0</code>.
+        Both return <code>data.extCaptions[]</code> of <code>{url, lanName?/language?/lan?}</code>;
+        label = English(lang tag) + " (audioLanguage)"; files are usually <b>.srt</b>
+        (CloudFront-signed or plain).</p>
+      <p><b>CastleTV</b> — every film-api answer is <code>base64(AES-128-CBC)</code>; key =
+        first 16 bytes of <code>base64decode(getSecurityKey().data) + "T!BgJB"</code>, IV = key.
+        Episode details (<code>/film-api/v1.9.9/movie</code>) carry
+        <code>episodes[].subtitles[]</code> (<code>{title, abbreviate, url, isDefault, isAI}</code>),
+        <b>.vtt</b> files on img1.bhcxy.com / fhxod / fodcyy. getVideo2 only needed when the
+        details list is empty, and accepts internal resolution codes "2"/"1" only.</p>
+      <p><b>4KHDHub</b> — <span class="note">no subtitles at all</span>: the
+        <code>subtitleCallback</code> is only threaded through the HubCloud / Hubdrive /
+        Hblinks / HUBCDN extractors and none of them emit a SubtitleFile.</p>
+    </div>
+  </section>
+</main>
+
+<script>
+'use strict';
+const $ = id => document.getElementById(id);
+const API = location.origin.includes('8799') ? location.origin : 'http://127.0.0.1:8799';
+
+async function api(path) {
+  const r = await fetch(API + path);
+  const j = await r.json();
+  if (j.error) throw new Error(j.error);
+  return j;
+}
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const setStatus = (id, msg, isErr) => { $(id).innerHTML = msg ? `<span${isErr ? ' class="err"' : ''}>${esc(msg)}</span>` : ''; };
+
+/* ---------- preview ---------- */
+let previewBusy = false;
+async function preview(url, provider) {
+  $('pv').textContent = 'loading…';
+  $('pv-src').textContent = '· ' + provider;
+  try {
+    const { text, vtt } = await api('/api/preview?provider=' + provider + '&url=' + encodeURIComponent(url));
+    $('pv').textContent = (vtt && !text.startsWith('WEBVTT') ? '[as VTT]\n' : '') +
+      (vtt || text || '(empty file)');
+  } catch (e) {
+    $('pv').innerHTML = `<span class="err">${esc(String(e.message || e))}</span>`;
+  }
+}
+
+/* ---------- tabs ---------- */
+function tab(which) {
+  $('tab-mb').classList.toggle('on', which === 'mb');
+  $('tab-castle').classList.toggle('on', which === 'castle');
+  $('pane-mb').hidden = which !== 'mb';
+  $('pane-castle').hidden = which !== 'castle';
+}
+$('tab-mb').onclick = () => tab('mb');
+$('tab-castle').onclick = () => tab('castle');
+
+/* ---------- MovieBox ---------- */
+let mbSubjects = [];
+async function mbSearch() {
+  setStatus('mb-s', 'searching…'); $('mb-items').innerHTML = ''; $('mb-caps').innerHTML = '';
+  try {
+    const { items } = await api('/api/moviebox/search?q=' + encodeURIComponent($('mb-q').value.trim()));
+    mbSubjects = items;
+    setStatus('mb-s', items.length ? `${items.length} results` : 'no results');
+    $('mb-items').innerHTML = items.map((s, i) => {
+      const t = s.title || s.name || s.subjectId || s.id;
+      const sub = [s.subjectType === 2 ? 'series' : 'movie', s.year, s.areaName]
+        .filter(Boolean).join(' · ');
+      return `<li data-i="${i}"><div class="t">${esc(t)}</div><div class="s">${esc(sub)}</div></li>`;
+    }).join('');
+    $('mb-items').querySelectorAll('li').forEach(li =>
+      li.onclick = () => { $('mb-items').querySelectorAll('li').forEach(x => x.classList.remove('sel'));
+        li.classList.add('sel'); mbCaptions(mbSubjects[+li.dataset.i]); });
+  } catch (e) { setStatus('mb-s', String(e.message || e), true); }
+}
+async function mbCaptions(subject) {
+  const sid = String(subject.subjectId || subject.id || '');
+  setStatus('mb-s', `loading captions for ${sid}…`); $('mb-caps').innerHTML = '';
+  try {
+    const { items } = await api('/api/moviebox/captions?subjectId=' + encodeURIComponent(sid));
+    setStatus('mb-s', items.length ? `${items.length} caption track(s)` : 'no caption tracks returned');
+    $('mb-caps').innerHTML = items.map((c, i) =>
+      `<li data-i="${i}"><div class="t">${esc(c.label)}</div>
+       <div class="s"><span class="pill">${esc(c.endpoint)}</span>
+       <span class="pill">streamId ${esc(c.streamId)}</span>${esc(c.url)}</div></li>`).join('');
+    $('mb-caps').querySelectorAll('li').forEach(li => li.onclick = () => {
+      $('mb-caps').querySelectorAll('li').forEach(x => x.classList.remove('sel'));
+      li.classList.add('sel');
+      const c = items[+li.dataset.i];
+      preview(c.url, 'moviebox');
+    });
+  } catch (e) { setStatus('mb-s', String(e.message || e), true); }
+}
+$('mb-go').onclick = mbSearch;
+$('mb-q').addEventListener('keydown', e => { if (e.key === 'Enter') mbSearch(); });
+
+/* ---------- CastleTV ---------- */
+let cMovies = [], cDetailData = null;
+async function cSearch() {
+  setStatus('c-s', 'searching…'); $('c-items').innerHTML = ''; $('c-eps').innerHTML = ''; $('c-subs').innerHTML = '';
+  try {
+    const { items } = await api('/api/castle/search?q=' + encodeURIComponent($('c-q').value.trim()));
+    cMovies = items;
+    setStatus('c-s', items.length ? `${items.length} results` : 'no results');
+    $('c-items').innerHTML = items.map((m, i) => {
+      const id = m.id || m.movieId;
+      return `<li data-i="${i}"><div class="t">${esc(m.title || m.movieName)}</div>
+        <div class="s">${esc(id)} · ${esc((m.languages || []).join(', '))}</div></li>`;
+    }).join('');
+    $('c-items').querySelectorAll('li').forEach(li => li.onclick = () => {
+      $('c-items').querySelectorAll('li').forEach(x => x.classList.remove('sel'));
+      li.classList.add('sel'); cLoadDetails(cMovies[+li.dataset.i]);
+    });
+  } catch (e) { setStatus('c-s', String(e.message || e), true); }
+}
+async function cLoadDetails(movie) {
+  const movieId = String(movie.id || movie.movieId);
+  setStatus('c-s', `details for ${movieId}…`); $('c-eps').innerHTML = ''; $('c-subs').innerHTML = '';
+  try {
+    const { data } = await api('/api/castle/details?movieId=' + encodeURIComponent(movieId));
+    cDetailData = data;
+    const eps = data.episodes || [];
+    setStatus('c-s', `${eps.length} episode(s)`);
+    $('c-eps').innerHTML = eps.map((ep, i) => {
+      const tracks = (ep.tracks || []).map(t => `${t.languageName}(${t.languageId})`).join(', ');
+      const n = (ep.subtitles || []).length;
+      return `<li data-i="${i}"><div class="t">${esc(ep.title || ep.name || ep.id)}</div>
+        <div class="s">ep ${esc(ep.id)} · audio: ${esc(tracks || '—')} · ${n} subtitle file(s) in details</div></li>`;
+    }).join('');
+    $('c-eps').querySelectorAll('li').forEach(li => li.onclick = () => {
+      $('c-eps').querySelectorAll('li').forEach(x => x.classList.remove('sel'));
+      li.classList.add('sel'); cSubtitles(cDetailData.episodes[+li.dataset.i]);
+    });
+  } catch (e) { setStatus('c-s', String(e.message || e), true); }
+}
+async function cSubtitles(ep) {
+  const episodeId = String(ep.id);
+  $('c-subs').innerHTML = '<li class="muted">loading…</li>';
+  try {
+    const firstAudio = (ep.tracks || [])[0];
+    const { items } = await api('/api/castle/subtitles?movieId=' +
+      encodeURIComponent(String(cDetailData.movieId || cDetailData.id)) +
+      '&episodeId=' + encodeURIComponent(episodeId) +
+      (firstAudio && firstAudio.languageId != null
+        ? '&languageId=' + encodeURIComponent(String(firstAudio.languageId)) : ''));
+    $('c-subs').innerHTML = items.length ? items.map((s, i) =>
+      `<li data-i="${i}"><div class="t">${esc(s.label)}</div>
+       <div class="s"><span class="pill">${esc(s.source)}</span>
+       ${s.isDefault ? '<span class="pill def">default</span>' : ''}
+       ${s.isAI ? '<span class="pill ai">AI</span>' : ''}${esc(s.url)}</div></li>`).join('')
+      : '<li class="muted">no subtitle tracks returned</li>';
+    $('c-subs').querySelectorAll('li[data-i]').forEach(li => li.onclick = () => {
+      $('c-subs').querySelectorAll('li').forEach(x => x.classList.remove('sel'));
+      li.classList.add('sel');
+      const s = items[+li.dataset.i];
+      preview(s.url, 'castle');
+    });
+  } catch (e) {
+    $('c-subs').innerHTML = `<li class="err">${esc(String(e.message || e))}</li>`;
+  }
+}
+$('c-go').onclick = cSearch;
+$('c-q').addEventListener('keydown', e => { if (e.key === 'Enter') cSearch(); });
+</script>
+</body>
+</html>

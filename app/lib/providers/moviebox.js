@@ -2,6 +2,10 @@
 /* MovieBox (aoneroom) API client — ported from the cloudstream MovieBoxProvider plugin.
    Handles visitor login, signed requests, search, details, seasons, play info. */
 const crypto = require('crypto');
+const fs = require('fs');
+const path = require('path');
+const { ensureDir } = require('../util');
+const { convertSubtitle } = require('../subtitles');
 
 const HOSTS = [
   'https://apig.inmoviebox.com', 'https://apii.inmoviebox.com',
@@ -255,6 +259,123 @@ class MovieBox {
   }
 
   async pickStream(args) { const list = await this.streams(args); return list[0] || null; }
+
+  /* ---------- subtitles (MovieBoxProvider.loadCaptions port) ----------
+     Two endpoints, same signed auth headers as the streams:
+       GET /wefeed-mobile-bff/subject-api/get-stream-captions?subjectId=..&streamId=..
+       GET /wefeed-mobile-bff/subject-api/get-ext-captions?subjectId=..&resourceId=..&episode=0
+     Both answer data.extCaptions = [{url, lanName?/language?/lan?}].
+     streamId = play-info stream id, resource item id, then "se|ep" fallback. */
+
+  async captionStreamIds(id, season = 0, episode = 0) {
+    const ids = [];
+    const push = v => { const s = String(v == null ? '' : v); if (s && !ids.includes(s)) ids.push(s); };
+    const se = Number(season) || 0, ep = Number(episode) || 0;
+    const res = await this.resource(String(id)).catch(() => null);
+    const items = (res && res.list) || [];
+    // Series: only the resource ids of the requested episode (a season can have
+    // hundreds — calling both caption endpoints for each would be slow).
+    let candidates = items;
+    if (se || ep) candidates = items.filter(x => Number(x.se) === se && Number(x.ep) === ep);
+    if (!candidates.length && ep) candidates = items.filter(x => Number(x.ep) === ep);
+    for (const x of candidates.slice(0, 12)) push(x.resourceId || x.id);
+    try {
+      const pi = await this.playInfo(String(id));
+      for (const s of (pi && pi.streams) || []) push(s.id);
+    } catch { /* play-info is optional */ }
+    push(`${se}|${ep}`);
+    this._inlineCaptions = candidates.flatMap(x => Array.isArray(x.extCaptions) ? x.extCaptions : []);
+    return ids;
+  }
+
+  async _captionItems(pathAndQuery) {
+    const r = await this._req('GET', pathAndQuery);
+    const ext = (r && r.data && r.data.extCaptions);
+    return Array.isArray(ext) ? ext : [];
+  }
+
+  async listCaptions({ id, season = 0, episode = 0 } = {}) {
+    await this.login();
+    const tracks = [];
+    const seen = new Set();
+    const addTrack = (c, endpoint, streamId) => {
+      const url = String((c && c.url) || '').trim();
+      if (!url) return;
+      // signed CDN urls (cacdn) re-sign per request — dedup on the path, not the
+      // full url, so the same subtitle file is not listed twice.
+      const base = url.split('?')[0];
+      if (seen.has(base)) return;
+      seen.add(base);
+      const raw = String(c.lanName || c.language || c.lan || '').trim();
+      const name = tagToEnglish(raw) || tagToEnglish(raw.split('-')[0]) || raw || 'Unknown';
+      tracks.push({ lang: name, label: name, url, endpoint, streamId: streamId || '' });
+    };
+    for (const streamId of await this.captionStreamIds(id, season, episode)) {
+      const qs = encodeURIComponent(streamId);
+      for (const [endpoint, p] of [
+        ['stream-captions', `/wefeed-mobile-bff/subject-api/get-stream-captions?subjectId=${id}&streamId=${qs}`],
+        ['ext-captions', `/wefeed-mobile-bff/subject-api/get-ext-captions?subjectId=${id}&resourceId=${qs}&episode=0`],
+      ]) {
+        const items = await this._captionItems(p).catch(() => []); // the "se|ep" fallback may 400
+        for (const c of items) addTrack(c, endpoint, streamId);
+      }
+    }
+    // resource items can carry extCaptions inline — same objects the endpoints return
+    for (const c of this._inlineCaptions || []) addTrack(c, 'inline', '');
+    this._inlineCaptions = null;
+    return { id: String(id), tracks };
+  }
+
+  /* Download one caption track (SRT files on cacdn/pacdn) and convert to the
+     requested format. `out` is a base path; the extension is chosen here. */
+  async fetchCaptions({ id, season = 0, episode = 0, lang, out, format = 'srt' } = {}) {
+    const { tracks } = await this.listCaptions({ id, season, episode });
+    if (!tracks.length) throw new Error('MovieBox: no caption tracks for this title');
+    const pick = pickSubtitleTrack(tracks, lang);
+    const r = await fetch(pick.url, {
+      headers: { 'user-agent': UA, accept: '*/*' },
+      redirect: 'follow', signal: AbortSignal.timeout(60000),
+    });
+    if (!r.ok) throw new Error(`MovieBox: caption download HTTP ${r.status}`);
+    const text = Buffer.from(await r.arrayBuffer()).toString('utf8');
+    const fmt = String(format || 'srt').toLowerCase() === 'vtt' ? 'vtt' : 'srt';
+    const base = String(out || path.join(ROOT_CACHE(), 'captions')).replace(/\.(srt|vtt)$/i, '');
+    ensureDir(path.dirname(base));
+    const file = `${base}.${fmt}`;
+    fs.writeFileSync(file, convertSubtitle(text, fmt), 'utf8');
+    return { file, lang: pick.lang, label: pick.label, source: pick.endpoint, format: fmt };
+  }
+}
+
+function ROOT_CACHE() { return path.join(__dirname, '..', '..', '..', 'data', 'cache'); }
+
+/* Shared pick: exact lang match, then substring on lang/label, then English,
+   then the first track. */
+function pickSubtitleTrack(tracks, lang) {
+  const needle = String(lang || '').trim().toLowerCase();
+  if (needle) {
+    const hit = tracks.find(t => String(t.lang || '').toLowerCase() === needle)
+      || tracks.find(t => String(t.label || '').toLowerCase() === needle)
+      || tracks.find(t => String(t.lang || '').toLowerCase().includes(needle))
+      || tracks.find(t => String(t.label || '').toLowerCase().includes(needle));
+    if (hit) return hit;
+  }
+  return tracks.find(t => String(t.lang || '').toLowerCase() === 'english')
+    || tracks.find(t => t.isDefault) || tracks[0];
+}
+
+/* Compact port of SubtitleHelper.fromTagToEnglishLanguageName — the caption
+   language codes the MovieBox API returns ("en", "hi", "ta", …). */
+const LANG_TAGS = {
+  en: 'English', hi: 'Hindi', ta: 'Tamil', te: 'Telugu', ml: 'Malayalam',
+  kn: 'Kannada', bn: 'Bengali', mr: 'Marathi', pa: 'Punjabi', gu: 'Gujarati',
+  ur: 'Urdu', ar: 'Arabic', es: 'Spanish', fr: 'French', de: 'German',
+  pt: 'Portuguese', ru: 'Russian', ja: 'Japanese', ko: 'Korean', zh: 'Chinese',
+  it: 'Italian', tr: 'Turkish', id: 'Indonesian', th: 'Thai', vi: 'Vietnamese',
+  ms: 'Malay', fa: 'Persian', pl: 'Polish', nl: 'Dutch', sv: 'Swedish',
+};
+function tagToEnglish(tag) {
+  return LANG_TAGS[String(tag || '').trim().toLowerCase()] || '';
 }
 
 function normalizeSubject(s) {

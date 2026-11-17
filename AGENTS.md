@@ -3,6 +3,13 @@
 Local-first source for film, series, episode and YouTube-native edits. Node bridge +
 extension repositories + an edit workspace. Read this before touching the folder.
 
+**Agent gate:** this folder is its OWN git repo (`Contact_Sheets`); the parent repo
+ignores `cloudstream/` on purpose. See the root `..\AGENTS.md` §0 before any work.
+Publish only authored source (`app\`, `scripts\`, config, launchers, docs) and UI assets
+the source references. Never commit generated contact sheets, clips, PDFs, caches,
+downloads, subtitles (`*.srt`, `*.vtt`) or screenshot artifacts. Extensions under
+`extensions\<repo>\` are restored by URL from `config\repos.json`, not from git.
+
 ## Layout
 
 ```
@@ -60,8 +67,10 @@ streams pair a video-only and an audio-only format: provider streams carry
   without captions still gets a normal sheet.
 - Subtitle files (SRT/VTT with timestamps) can be downloaded for YouTube videos
   via `GET /api/subtitles?provider=youtube&id=<id>&lang=<track>&format=srt|vtt`;
-  `GET /api/captions?provider=youtube&id=<id>` lists available tracks. Other
-  providers do not expose subtitles.
+  `GET /api/captions?provider=youtube&id=<id>` lists available tracks. MovieBox
+  and CastleTV expose subtitle tracks too (`season`/`episode` params select the
+  episode; MovieBox serves .srt, CastleTV serves .vtt — both are converted to the
+  requested format). 4KHDHub / VegaMovies have no subtitle source.
 - **Video → PDF** (UI card, meant for Shorts): paste a YouTube Shorts link, pick
   fps (30 default) and width. It works for any video but is sized for short clips.
   `POST /api/jobs` with `"kind":"pdf"` downloads the whole video once, decodes every

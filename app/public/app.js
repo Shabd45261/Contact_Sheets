@@ -422,6 +422,9 @@
     const secPlan = mkSection('Sheet plan', 'pick any two — the third is auto');
     const secCap = state.providerId === 'youtube'
       ? mkSection('Captions', "burn the video's own track into each tile") : null;
+    const subKinds = ['moviebox', 'castle'];
+    const secSubs = state.provider && subKinds.includes(state.provider.kind)
+      ? mkSection('Subtitles', 'download a track as .srt or .vtt') : null;
     const secCreate = mkSection('Create', '');
     const secWin = mkSection('Window sheet', 'a slice around one timestamp');
     const secClip = mkSection('Clip', 'mp4 of the selected episode');
@@ -748,6 +751,75 @@
     const streamBox = el('div', 'stream-box hidden');
     streamBox.id = 'streamBox';
     secClip.appendChild(streamBox);
+
+    // Subtitle download: every track the provider offers, as .srt or .vtt
+    if (secSubs) {
+      const subRow = el('div', 'control-row');
+      let epInput = null;
+      if (d.type === 'series') {
+        subRow.appendChild(el('label', '', 'Episode'));
+        epInput = el('input');
+        epInput.type = 'number';
+        epInput.min = '1';
+        epInput.value = String(state.focusEp || 1);
+        epInput.title = 'Episode number for the subtitle tracks';
+        epInput.className = 'num-input';
+        epInput.addEventListener('change', loadSubtitleTracks);
+        subRow.appendChild(epInput);
+      }
+      const reloadBtn = el('button', 'btn btn-sm', 'Reload tracks');
+      reloadBtn.type = 'button';
+      reloadBtn.addEventListener('click', loadSubtitleTracks);
+      subRow.appendChild(reloadBtn);
+      subRow.appendChild(el('span', 'hint', 'one file per language the provider offers'));
+      secSubs.appendChild(subRow);
+      const subList = el('div', 'sub-list');
+      secSubs.appendChild(subList);
+
+      async function loadSubtitleTracks() {
+        const season = d.type === 'series' ? Number(state.season) || 1 : 0;
+        const episode = d.type === 'series' ? Math.max(1, Number(epInput.value) || 1) : 0;
+        subList.innerHTML = '';
+        const wait = el('div', 'hint', 'loading subtitle tracks…');
+        subList.appendChild(wait);
+        try {
+          const res = await api(`/api/captions?provider=${encodeURIComponent(state.providerId)}`
+            + `&id=${encodeURIComponent(d.id)}&season=${season}&episode=${episode}`);
+          subList.innerHTML = '';
+          const tracks = res.tracks || [];
+          if (!tracks.length) {
+            subList.appendChild(el('div', 'hint', 'this provider offers no subtitle files for this title'));
+            return;
+          }
+          for (const t of tracks) {
+            const line = el('div', 'sub-row');
+            const name = el('span', 'sub-name', t.label || t.lang || 'Unknown');
+            name.title = t.source ? `source: ${t.source}` : '';
+            line.appendChild(name);
+            if (t.isDefault) line.appendChild(el('span', 'chip strong', 'default'));
+            if (t.isAI) line.appendChild(el('span', 'chip', 'AI'));
+            const base = `${(d.title || 'subtitle').replace(/[\\/:*?"<>|]+/g, ' ').trim()}.${t.label || t.lang}`.slice(0, 80);
+            for (const fmt of ['srt', 'vtt']) {
+              const b = el('button', 'btn btn-sm', fmt.toUpperCase());
+              b.type = 'button';
+              b.title = `Download this track as .${fmt}`;
+              b.addEventListener('click', () => downloadUrl(
+                `/api/subtitles?provider=${encodeURIComponent(state.providerId)}`
+                + `&id=${encodeURIComponent(d.id)}&season=${season}&episode=${episode}`
+                + `&lang=${encodeURIComponent(t.lang || t.label || '')}&format=${fmt}`
+                + `&name=${encodeURIComponent(base)}`,
+                `${base}.${fmt}`));
+              line.appendChild(b);
+            }
+            subList.appendChild(line);
+          }
+        } catch (e) {
+          subList.innerHTML = '';
+          subList.appendChild(el('div', 'hint', 'no subtitle tracks: ' + e.message));
+        }
+      }
+      loadSubtitleTracks();
+    }
     body.appendChild(controls);
 
     // Auto-detect runtime so the sheet plan can fill in the third value.

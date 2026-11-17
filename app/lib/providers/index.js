@@ -25,7 +25,9 @@ const ROOT = path.join(__dirname, '..', '..', '..');
 const ENTRIES = [
   // ---- MovieBox variants -------------------------------------------------
   { id: 'moviebox-phisher', kind: 'moviebox', name: 'MovieBox (Phisher)', short: 'MovieBox', repo: 'phisher', plugin: 'MovieBoxProvider', file: 'MovieBoxProvider.cs3', language: 'hi', region: 'IN', accent: '#f97316' },
-  { id: 'moviebox-cncverse', kind: 'moviebox', name: 'MovieBox (CNCVerse)', short: 'MovieBox', repo: 'cncverse', plugin: 'MovieBoxProvider', file: 'MovieBoxProvider.cs3', language: 'hi', region: 'IN', accent: '#f97316' },
+  // Removed 2026-11-17: serves a ~23 s notice clip instead of the film on stream
+// resolution ("client version outdated"). Kept out of ENTRIES; see AGENTS.md.
+// { id: 'moviebox-cncverse', kind: 'moviebox', name: 'MovieBox (CNCVerse)', short: 'MovieBox', repo: 'cncverse', plugin: 'MovieBoxProvider', file: 'MovieBoxProvider.cs3', language: 'hi', region: 'IN', accent: '#f97316' },
   { id: 'moviebox-cncverse-in', kind: 'moviebox', name: 'MovieBox IN (CNCVerse)', short: 'MovieBox IN', repo: 'cncverse', plugin: 'MovieBoxProviderIN', file: 'MovieBoxProviderIN.cs3', language: 'hi', region: 'IN', accent: '#fb923c' },
 
   // ---- CastleTV ----------------------------------------------------------

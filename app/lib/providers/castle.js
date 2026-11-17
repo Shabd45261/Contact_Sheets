@@ -1,7 +1,10 @@
 'use strict';
 /* CastleTV provider — ported from cncverse/CastleTvProvider (AES-wrapped JSON API). */
 const crypto = require('crypto');
-const { request, UA_DESKTOP } = require('../util');
+const fs = require('fs');
+const path = require('path');
+const { request, UA_DESKTOP, ensureDir } = require('../util');
+const { convertSubtitle } = require('../subtitles');
 
 const HOST = 'https://api.hlowb.com';
 const SUP = 'T!BgJB';
@@ -273,6 +276,86 @@ class CastleProvider {
       } catch (e) { failures.push(`res ${res}: ${e.message}`); }
     }
     throw new Error('CastleTV: no stream available (' + failures.slice(0, 3).join(' | ') + ')');
+  }
+
+  /* ---------- subtitles (emitTrack SubtitleFile port) ----------
+     The details answer already carries every episode's subtitle list
+     (episodes[].subtitles: {languageId, abbreviate, title, url, isDefault, isAI});
+     getVideo2 (v2.0.1) is the fallback and only accepts the internal resolution
+     codes 2/1 — "1080" answers permissionDenied. Files are .vtt on img1.*. */
+
+  async _subtitlePool(movieId, ep) {
+    const raw = await this._raw(movieId);
+    const rawEp = ((raw && raw.episodes) || [])
+      .find(e => String(e.id) === String(ep.id)) || ((raw && raw.episodes) || [])[0];
+    let subs = (rawEp && rawEp.subtitles) || [];
+    let source = 'details';
+    if (!subs.length) {
+      const langId = ((ep.tracks || [])[0] || {}).languageId;
+      for (const res of [2, 1]) {
+        try {
+          const data = await this.getVideo(movieId, ep.id, langId, res);
+          if (data && !data.permissionDenied && Array.isArray(data.subtitles) && data.subtitles.length) {
+            subs = data.subtitles;
+            source = `getVideo2:${res}`;
+            break;
+          }
+        } catch { /* try the next resolution code */ }
+      }
+    }
+    return { subs, source };
+  }
+
+  async listCaptions({ id, season = 0, episode = 0 } = {}) {
+    const detail = await this.detail(String(id));
+    const s = detail.seasons.find(x => x.season === Number(season)) || detail.seasons[0];
+    if (!s) throw new Error('CastleTV: no seasons in detail');
+    let eps = s.episodes && s.episodes.length ? s.episodes : await this.seasonEpisodes(s.movieId, s.season);
+    const ep = eps.find(e => e.number === Number(episode)) || eps[0];
+    if (!ep) throw new Error('CastleTV: no episode for this selection');
+    const mid = s.movieId || String(id);
+    const { subs, source } = await this._subtitlePool(mid, ep);
+    const tracks = [];
+    const seen = new Set();
+    for (const t of subs) {
+      const url = String((t && t.url) || '').trim();
+      if (!url) continue;
+      const key = url.split('?')[0];
+      if (seen.has(key)) continue;
+      seen.add(key);
+      const label = t.title || t.abbreviate || 'Unknown';
+      tracks.push({
+        lang: label, label, url, source,
+        isDefault: !!t.isDefault, isAI: !!t.isAI,
+        languageId: t.languageId, abbreviate: t.abbreviate || '',
+      });
+    }
+    return {
+      id: String(id), episode: ep.number, episodeId: ep.id,
+      tracks, originalLanguage: ((ep.tracks || [])[0] || {}).languageName || null,
+    };
+  }
+
+  /* Download one subtitle file and convert to the requested format. */
+  async fetchCaptions({ id, season = 0, episode = 0, lang, out, format = 'srt' } = {}) {
+    const { tracks } = await this.listCaptions({ id, season, episode });
+    if (!tracks.length) throw new Error('CastleTV: no subtitle tracks for this title');
+    const needle = String(lang || '').trim().toLowerCase();
+    const pick = (needle
+      && (tracks.find(t => String(t.lang || '').toLowerCase() === needle)
+        || tracks.find(t => String(t.label || '').toLowerCase() === needle)
+        || tracks.find(t => String(t.lang || '').toLowerCase().includes(needle))))
+      || tracks.find(t => t.isDefault) || tracks[0];
+    const r = await request(pick.url, { headers: HEADERS, timeout: 60000, retries: 1 });
+    if (!r.ok) throw new Error(`CastleTV: subtitle download HTTP ${r.status}`);
+    const text = r.text || '';
+    const fmt = String(format || 'srt').toLowerCase() === 'vtt' ? 'vtt' : 'srt';
+    const base = String(out || path.join(__dirname, '..', '..', '..', 'data', 'cache', 'subtitles'))
+      .replace(/\.(srt|vtt)$/i, '');
+    ensureDir(path.dirname(base));
+    const file = `${base}.${fmt}`;
+    fs.writeFileSync(file, convertSubtitle(text, fmt), 'utf8');
+    return { file, lang: pick.lang, label: pick.label, source: pick.source, format: fmt };
   }
 
   /* Verify a stream actually plays; returns the first working URL. */

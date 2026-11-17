@@ -34,7 +34,7 @@ function codeStamp() {
 const BOOT_STAMP = codeStamp();
 /* Bump when the job API changes; the page refuses to trust a server below its REQUIRED_API. */
 const API_LEVEL = 4;
-const FEATURES = ['plan-knobs', 'job-remove', 'window-sheets', 'episode-items', 'youtube-source', 'sheet-captions', 'video-to-pdf'];
+const FEATURES = ['plan-knobs', 'job-remove', 'window-sheets', 'episode-items', 'youtube-source', 'sheet-captions', 'video-to-pdf', 'provider-subtitles'];
 const MIME = {
   '.html': 'text/html; charset=utf-8', '.js': 'application/javascript; charset=utf-8',
   '.css': 'text/css; charset=utf-8', '.json': 'application/json; charset=utf-8',
@@ -225,10 +225,24 @@ frame images are deleted once the PDF is written. Frames are capped at 30,000
 extensions/<repo>/pdfs/<Provider>/<Title>/frames-<fps>fps-<width>w.pdf with a
 .json sidecar (pages, bytes, duration). The UI card "Video -> PDF" does this.
 
-## 8. Library
+## 8. Subtitles (moviebox / castletv / youtube)
+GET /api/captions?provider=<p>&id=<id>[&season=<n>&episode=<n>]
+-> { tracks: [{ lang, label, url?, source, isDefault?, isAI? }] }
+   moviebox: both loadCaptions endpoints (get-stream-captions + get-ext-captions),
+             per streamId candidate; .srt files on cacdn/pacdn.
+   castletv: episodes[].subtitles from the details answer (getVideo2 codes 2/1
+             only as fallback); .vtt files. episode defaults to the first one.
+   youtube:  manual + auto tracks for the video.
+fourkhdhub / vegamovies: no subtitle source (their extractors never emit one).
+
+GET /api/subtitles?provider=<p>&id=<id>&lang=<track lang>&format=srt|vtt
+    [&season=<n>&episode=<n>][&name=<download filename>]
+-> the subtitle file as a download (converted between SRT and VTT as needed).
+
+## 9. Library
 GET /api/library -> { sheets: [...], clips: [...] } (everything already generated)
 
-## 9. Health
+## 10. Health
 GET /api/health
 `;
 
@@ -323,6 +337,8 @@ const server = http.createServer(async (req, res) => {
     if (p === '/' || p === '/index.html') return serveFile(res, path.join(PUBLIC, 'index.html'));
     if (p === '/app.js') return serveFile(res, path.join(PUBLIC, 'app.js'));
     if (p === '/styles.css') return serveFile(res, path.join(PUBLIC, 'styles.css'));
+    if (p === '/flixworld-movies-profile.jpg')
+      return serveFile(res, path.join(PUBLIC, 'flixworld-movies-profile.jpg'));
 
     if (p.startsWith('/sheets/')) {
       const abs = safeSheetPath(p.slice('/sheets/'.length));
@@ -653,8 +669,9 @@ const server = http.createServer(async (req, res) => {
       }
       try {
         const id = u.searchParams.get('id') || '';
+        const season = Number(u.searchParams.get('season') || 0);
         const episode = Number(u.searchParams.get('episode') || 0);
-        const out = await provider.listCaptions({ id, episode });
+        const out = await provider.listCaptions({ id, episode, season });
         return json(res, 200, out);
       } catch (e) {
         return json(res, 500, { error: e.message || String(e) });
@@ -670,18 +687,20 @@ const server = http.createServer(async (req, res) => {
       }
       try {
         const id = u.searchParams.get('id') || '';
+        const season = Number(u.searchParams.get('season') || 0);
         const episode = Number(u.searchParams.get('episode') || 0);
         const lang = u.searchParams.get('lang') || '';
         const format = (u.searchParams.get('format') || 'srt').toLowerCase();
         const fmt = format === 'vtt' ? 'vtt' : 'srt';
         const mime = fmt === 'vtt' ? 'text/vtt; charset=utf-8' : 'application/x-subrip; charset=utf-8';
         const out = path.join(CACHE_DIR, `subtitle-${providerId}-${Date.now()}.${fmt}`);
-        const capRes = await provider.fetchCaptions({ id, episode, lang, out, format: fmt });
+        const capRes = await provider.fetchCaptions({ id, episode, season, lang, out, format: fmt });
         const abs = capRes.file;
         fs.mkdirSync(CACHE_DIR, { recursive: true });
         // serve the downloaded file
         const st = fs.statSync(abs);
-        const fname = path.basename(abs);
+        const dlName = sanitizeName(u.searchParams.get('name') || '', 90);
+        const fname = (dlName && `${dlName}.${fmt}`) || capRes.name || path.basename(abs);
         res.writeHead(200, {
           'content-type': mime,
           'content-length': st.size,
